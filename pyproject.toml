@@ -1,0 +1,13 @@
+[project]
+name = "email-triage-agent"
+version = "0.1.0"
+description = "Agent IA de tri et de résumé d'emails (FastAPI + Gemini Structured Outputs)"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+filterwarnings = [
+    # Avertissement interne à Starlette (dépendance de FastAPI), sans impact sur le projet.
+    "ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning:starlette",
+]
