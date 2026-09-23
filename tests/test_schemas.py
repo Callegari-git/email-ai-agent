@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import pytest
@@ -34,7 +34,7 @@ class TestEmailInput:
     def test_rejects_blank_required_fields(self, field: str) -> None:
         data = {"id": "42", "sender": "alice@example.com", field: "   "}
         with pytest.raises(ValidationError):
-            EmailInput(**data)
+            EmailInput.model_validate(data)
 
     def test_is_immutable(self) -> None:
         email = EmailInput(id="42", sender="alice@example.com")
@@ -112,7 +112,7 @@ def _assert_gemini_compatible(node: dict[str, Any]) -> None:
 
 class TestAnalyzedEmail:
     def test_from_email_copies_metadata_from_source(self) -> None:
-        received_at = datetime(2026, 9, 22, 9, 30, tzinfo=timezone.utc)
+        received_at = datetime(2026, 9, 22, 9, 30, tzinfo=UTC)
         email = EmailInput(id="42", sender="alice@example.com", subject="Devis", received_at=received_at)
         analysis = EmailAnalysisResult(**_valid_analysis_payload())
 

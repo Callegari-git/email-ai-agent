@@ -11,3 +11,46 @@ filterwarnings = [
     # Avertissement interne à Starlette (dépendance de FastAPI), sans impact sur le projet.
     "ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning:starlette",
 ]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",  # pycodestyle
+    "F",       # pyflakes : imports/variables inutilisés, noms indéfinis
+    "I",       # isort : ordre des imports
+    "UP",      # pyupgrade : syntaxe moderne pour la version cible
+    "B",       # flake8-bugbear : pièges classiques (arguments mutables, except trop large...)
+    "SIM",     # flake8-simplify
+    "RUF",     # règles propres à Ruff
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "scripts", "tests"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["app", "scripts", "tests"]
+plugins = ["pydantic.mypy"]
+# Mode "raisonnable" : pas de --strict, mais les contrôles qui ont le meilleur rapport
+# utilité / bruit. Le code applicatif doit être entièrement annoté (règle du projet).
+check_untyped_defs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+# Bibliothèques Google sans annotations de types publiées.
+module = ["googleapiclient.*", "google_auth_httplib2", "google_auth_oauthlib.*"]
+ignore_missing_imports = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true

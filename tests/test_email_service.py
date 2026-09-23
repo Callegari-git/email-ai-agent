@@ -1,7 +1,7 @@
 import base64
 import json
 import stat
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -59,7 +59,9 @@ class FakeRequest:
 class FakeGmailService:
     """Imite la chaîne `service.users().messages().list/get(...)` du client Google."""
 
-    def __init__(self, list_result: dict[str, Any] | Exception, messages: dict[str, dict[str, Any] | Exception]) -> None:
+    def __init__(
+        self, list_result: dict[str, Any] | Exception, messages: dict[str, dict[str, Any] | Exception]
+    ) -> None:
         self.list_result = list_result
         self.messages_by_id = messages
         self.list_kwargs: dict[str, Any] = {}
@@ -183,7 +185,7 @@ class TestTranslateError:
 
 def _write_token(path: Path, *, expired: bool = False, scopes: list[str] = GMAIL_SCOPES, refresh: bool = True) -> None:
     # google-auth manipule des dates UTC "naïves" (sans tzinfo).
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    now = datetime.now(UTC).replace(tzinfo=None)
     credentials = Credentials(
         token="access-token",
         refresh_token="refresh-token" if refresh else None,
@@ -252,7 +254,7 @@ class TestLoadCredentials:
 
         def fake_refresh(self: Credentials, request: Any) -> None:
             self.token = "new-access-token"
-            self.expiry = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=1)
+            self.expiry = datetime.now(UTC).replace(tzinfo=None) + timedelta(hours=1)
 
         monkeypatch.setattr(Credentials, "refresh", fake_refresh)
 
@@ -266,7 +268,8 @@ class TestMockProvider:
     def test_returns_most_recent_first_and_respects_limit(self) -> None:
         emails = MockEmailProvider().fetch_unread(max_results=3)
         assert len(emails) == 3
-        dates = [e.received_at for e in emails]
+        dates = [e.received_at for e in emails if e.received_at is not None]
+        assert len(dates) == 3
         assert dates == sorted(dates, reverse=True)
 
     def test_limit_above_available(self) -> None:

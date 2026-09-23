@@ -52,8 +52,6 @@ def get_settings() -> Settings:
     load_dotenv()
     # Les variables vides (ex: `IMAP_PASSWORD=`) sont ignorées pour retomber sur la valeur par défaut.
     raw: dict[str, str] = {
-        field: value
-        for field in Settings.model_fields
-        if (value := os.environ.get(field.upper(), "").strip())
+        field: value for field in Settings.model_fields if (value := os.environ.get(field.upper(), "").strip())
     }
     return Settings.model_validate(raw)

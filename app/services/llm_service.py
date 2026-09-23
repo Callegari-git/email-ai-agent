@@ -9,7 +9,7 @@ import asyncio
 import logging
 import re
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 from google import genai
@@ -103,7 +103,7 @@ def _sanitize(text: str) -> str:
 def build_user_prompt(email: EmailInput, max_body_chars: int, now: datetime | None = None) -> str:
     # La date du jour permet au modèle d'interpréter les échéances relatives
     # ("avant vendredi", "demain") : sans elle, il ne peut pas juger de leur proximité.
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     received_at = _format_date(email.received_at) if email.received_at else "inconnue"
 
     # On garde le début de l'email : la demande et l'échéance s'y trouvent presque
@@ -175,7 +175,7 @@ class EmailAnalyzer:
         *,
         max_body_chars: int = 8000,
         max_concurrency: int = 5,
-        thinking_level: str | None = None,
+        thinking_level: types.ThinkingLevel | None = None,
     ) -> None:
         self._client = client
         self._model = model
@@ -217,7 +217,9 @@ class EmailAnalyzer:
             settings.gemini_model,
             max_body_chars=settings.llm_max_body_chars,
             max_concurrency=settings.llm_max_concurrency,
-            thinking_level=settings.gemini_thinking_level,
+            thinking_level=(
+                types.ThinkingLevel(settings.gemini_thinking_level.upper()) if settings.gemini_thinking_level else None
+            ),
         )
 
     async def aclose(self) -> None:

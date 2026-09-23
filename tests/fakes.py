@@ -14,7 +14,9 @@ VALID_ANALYSIS = {
 }
 
 
-def make_response(text: str | None = None, *, finish_reason: str = "STOP") -> types.GenerateContentResponse:
+def make_response(
+    text: str | None = None, *, finish_reason: types.FinishReason = types.FinishReason.STOP
+) -> types.GenerateContentResponse:
     return types.GenerateContentResponse(
         candidates=[
             types.Candidate(

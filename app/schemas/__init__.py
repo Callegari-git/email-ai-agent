@@ -1,3 +1,4 @@
+from app.schemas.api import ErrorResponse, HealthResponse
 from app.schemas.email import (
     AnalysisFailure,
     AnalyzedEmail,
@@ -6,7 +7,6 @@ from app.schemas.email import (
     EmailInput,
     ImportanceLevel,
 )
-from app.schemas.api import ErrorResponse, HealthResponse
 
 __all__ = [
     "AnalysisFailure",

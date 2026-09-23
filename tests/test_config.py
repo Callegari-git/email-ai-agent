@@ -44,7 +44,9 @@ def test_empty_variable_falls_back_to_default(monkeypatch: pytest.MonkeyPatch) -
     assert get_settings().gemini_api_key is None
 
 
-@pytest.mark.parametrize(("name", "value"), [("MAX_EMAILS", "0"), ("EMAIL_PROVIDER", "pop3"), ("GMAIL_TIMEOUT_SECONDS", "abc")])
+@pytest.mark.parametrize(
+    ("name", "value"), [("MAX_EMAILS", "0"), ("EMAIL_PROVIDER", "pop3"), ("GMAIL_TIMEOUT_SECONDS", "abc")]
+)
 def test_invalid_values_fail_fast(monkeypatch: pytest.MonkeyPatch, name: str, value: str) -> None:
     monkeypatch.setenv(name, value)
     with pytest.raises(ValidationError):

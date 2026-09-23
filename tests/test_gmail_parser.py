@@ -1,5 +1,5 @@
 import base64
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import pytest
@@ -88,7 +88,7 @@ class TestParseGmailMessage:
         assert email.sender == "Alice <alice@example.com>"
         assert email.subject == "Réunion demain"
         assert email.body == "Corps"
-        assert email.received_at == datetime.fromtimestamp(1_790_000_000, tz=timezone.utc)
+        assert email.received_at == datetime.fromtimestamp(1_790_000_000, tz=UTC)
 
     def test_headers_are_case_insensitive(self) -> None:
         message = _message({"mimeType": "text/plain", "body": {}})

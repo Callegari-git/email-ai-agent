@@ -10,7 +10,7 @@ import binascii
 import logging
 import re
 from collections.abc import Iterator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from email.message import Message
 from html.parser import HTMLParser
 from typing import Any
@@ -141,7 +141,7 @@ def _parse_internal_date(message: GmailMessage) -> datetime | None:
     # que l'en-tête `Date`, qui est déclaré librement par l'expéditeur.
     raw = message.get("internalDate")
     try:
-        return datetime.fromtimestamp(int(raw) / 1000, tz=timezone.utc) if raw else None
+        return datetime.fromtimestamp(int(raw) / 1000, tz=UTC) if raw else None
     except (TypeError, ValueError, OverflowError):
         return None
 

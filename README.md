@@ -1,5 +1,7 @@
 # Email Triage Agent
 
+[![CI](https://github.com/Callegari-git/email-ai-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/Callegari-git/email-ai-agent/actions/workflows/ci.yml)
+
 API FastAPI qui récupère les emails non lus (Gmail), les fait évaluer par Gemini
 (importance 1 à 5 + résumé de 3 lignes max) et renvoie un JSON structuré, validé par Pydantic.
 
@@ -58,8 +60,14 @@ scripts/                     # authorize_gmail, try_analysis (essai en ligne de 
 tests/                       # pytest, sans appel réseau
 ```
 
-## Tests
+## Qualité et tests
 
 ```bash
-pytest
+ruff check . && ruff format --check .   # lint + formatage (`ruff format .` pour corriger)
+mypy                                    # typage
+pytest                                  # tests, sans appel réseau
 ```
+
+La CI GitHub Actions (`.github/workflows/ci.yml`) exécute ces mêmes commandes à chaque push
+et pull request, avec les tests sur Python 3.11, 3.12 et 3.13. Dependabot propose chaque
+semaine les mises à jour des dépendances et des actions.

@@ -1,6 +1,6 @@
 import asyncio
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -30,7 +30,7 @@ def _email(email_id: str = "m1", body: str = "Merci de régler la facture avant 
         sender="Claire <finance@client.fr>",
         subject="Facture impayée",
         body=body,
-        received_at=datetime(2026, 9, 21, 8, 0, tzinfo=timezone.utc),
+        received_at=datetime(2026, 9, 21, 8, 0, tzinfo=UTC),
     )
 
 
@@ -55,7 +55,7 @@ def _raise(exc: Exception) -> Handler:
 
 class TestBuildUserPrompt:
     def test_contains_email_fields_and_current_date(self) -> None:
-        now = datetime(2026, 9, 22, 10, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 9, 22, 10, 0, tzinfo=UTC)
         prompt = build_user_prompt(_email(), max_body_chars=1000, now=now)
 
         assert "Date du jour : " in prompt and "2026-09-22" in prompt
@@ -65,7 +65,7 @@ class TestBuildUserPrompt:
         assert "Merci de régler la facture avant demain." in prompt
 
     def test_date_uses_french_weekday(self) -> None:
-        now = datetime(2026, 9, 22, 12, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 9, 22, 12, 0, tzinfo=UTC)
         assert "mardi 2026-09-22" in build_user_prompt(_email(), max_body_chars=1000, now=now)
 
     def test_truncates_long_body(self) -> None:
@@ -104,12 +104,13 @@ class TestAnalyzeEmail:
         assert "<email>" in call["contents"]
 
     def test_request_config_enforces_structured_output(self) -> None:
-        analyzer, models = _analyzer(lambda contents: make_response(), thinking_level="low")
+        analyzer, models = _analyzer(lambda contents: make_response(), thinking_level=types.ThinkingLevel.LOW)
         asyncio.run(analyzer.analyze_email(_email()))
 
         config: types.GenerateContentConfig = models.calls[0]["config"]
         assert config.system_instruction == SYSTEM_PROMPT
         assert config.response_mime_type == "application/json"
+        assert config.response_json_schema is not None
         assert list(config.response_json_schema["properties"]) == ["importance_reason", "importance", "summary"]
         assert config.thinking_config is not None
         assert config.thinking_config.thinking_level == types.ThinkingLevel.LOW
@@ -125,11 +126,14 @@ class TestAnalyzeEmail:
             (make_response("pas du json"), "non conforme"),
             (make_response(json.dumps(VALID_ANALYSIS | {"importance": 7})), "non conforme"),
             (make_response(json.dumps(VALID_ANALYSIS | {"summary": ["", " "]})), "non conforme"),
-            (make_response(finish_reason="MAX_TOKENS"), "MAX_TOKENS"),
-            (make_response(finish_reason="SAFETY"), "SAFETY"),
+            (make_response(finish_reason=types.FinishReason.MAX_TOKENS), "MAX_TOKENS"),
+            (make_response(finish_reason=types.FinishReason.SAFETY), "SAFETY"),
             (
                 types.GenerateContentResponse(
-                    candidates=[], prompt_feedback=types.GenerateContentResponsePromptFeedback(block_reason="SAFETY")
+                    candidates=[],
+                    prompt_feedback=types.GenerateContentResponsePromptFeedback(
+                        block_reason=types.BlockedReason.SAFETY
+                    ),
                 ),
                 "blocage : SAFETY",
             ),
@@ -222,8 +226,11 @@ class TestFromSettings:
             EmailAnalyzer.from_settings(Settings())
 
     def test_builds_analyzer_from_settings(self) -> None:
-        settings = Settings(gemini_api_key=SecretStr("clé-test"), gemini_model="gemini-x", gemini_thinking_level="minimal")
+        settings = Settings(
+            gemini_api_key=SecretStr("clé-test"), gemini_model="gemini-x", gemini_thinking_level="minimal"
+        )
         analyzer = EmailAnalyzer.from_settings(settings)
         assert analyzer._model == "gemini-x"
         assert analyzer._config.thinking_config is not None
+        assert analyzer._config.thinking_config.thinking_level == types.ThinkingLevel.MINIMAL
         asyncio.run(analyzer.aclose())

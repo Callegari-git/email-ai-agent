@@ -8,7 +8,7 @@ asyncio.
 import logging
 import os
 import tempfile
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -141,9 +141,7 @@ class GmailEmailProvider:
             credentials = Credentials.from_authorized_user_file(str(self._token_path))
         except (ValueError, OSError) as exc:
             # ValueError couvre aussi un JSON valide mais incomplet (ex: refresh_token absent).
-            raise EmailAuthError(
-                f"Token Gmail invalide ou incomplet ({self._token_path}). {AUTHORIZE_HINT}"
-            ) from exc
+            raise EmailAuthError(f"Token Gmail invalide ou incomplet ({self._token_path}). {AUTHORIZE_HINT}") from exc
 
         if not credentials.has_scopes(GMAIL_SCOPES):
             raise EmailAuthError(f"Le token Gmail n'a pas les autorisations requises {GMAIL_SCOPES}. {AUTHORIZE_HINT}")
@@ -223,7 +221,7 @@ class MockEmailProvider:
     def fetch_unread(self, max_results: int) -> list[EmailInput]:
         if max_results < 1:
             raise ValueError("max_results doit être >= 1")
-        emails = _build_mock_emails(now=datetime.now(timezone.utc))[:max_results]
+        emails = _build_mock_emails(now=datetime.now(UTC))[:max_results]
         logger.info("Mock : %d email(s) renvoyé(s)", len(emails))
         return emails
 

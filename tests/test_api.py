@@ -121,7 +121,9 @@ class TestAnalyzeUnreadEmails:
 
     def test_llm_configuration_error_returns_500(self, app: FastAPI, client: TestClient) -> None:
         def invalid_key(contents: str) -> types.GenerateContentResponse:
-            payload = {"error": {"code": 400, "message": "API key not valid", "details": [{"reason": "API_KEY_INVALID"}]}}
+            payload = {
+                "error": {"code": 400, "message": "API key not valid", "details": [{"reason": "API_KEY_INVALID"}]}
+            }
             raise genai_errors.ClientError(400, payload)
 
         analyzer = EmailAnalyzer(FakeClient(invalid_key), "gemini-test")  # type: ignore[arg-type]
@@ -149,7 +151,9 @@ class TestAnalyzeEmail:
         assert client.post("/emails/analyze", json={"id": "", "sender": "a@b.c"}).status_code == 422
 
     def test_llm_unavailable_returns_503_with_retry_after(self, client: TestClient) -> None:
-        response = client.post("/emails/analyze", json={"id": "x1", "sender": "a@b.c", "subject": "Politique de télétravail"})
+        response = client.post(
+            "/emails/analyze", json={"id": "x1", "sender": "a@b.c", "subject": "Politique de télétravail"}
+        )
 
         assert response.status_code == 503
         assert response.headers["retry-after"] == "30"
@@ -204,6 +208,5 @@ class TestLifespan:
 
     def test_startup_fails_without_api_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(main, "get_settings", lambda: Settings())
-        with pytest.raises(LLMConfigurationError, match="GEMINI_API_KEY"):
-            with TestClient(main.create_app()):
-                pass
+        with pytest.raises(LLMConfigurationError, match="GEMINI_API_KEY"), TestClient(main.create_app()):
+            pass
